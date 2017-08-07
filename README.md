@@ -34,10 +34,11 @@ If all went well, you'll see something like this:
               _  /    /  __/_  /    _  /    / /_/ /        v0.0.1
               /_/     \___/ /_/     /_/     \__,_/
 
-
+```ini
 [+] Checking if Tile38 is running at '127.0.0.1:9851' is live... <br/>
 [+] Tile38 is RUNNING.<br/>
 [+] Terra started! Listening for incoming connections on '127.0.0.1:9761'.<br/>
+```
 
 By default, Terra runs on port `9761` and expects an instance of Tile38 server running on it's default port `9851`.
 However, the defaults can be changed. Run the following command to see Terra's usage:
