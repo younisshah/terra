@@ -28,7 +28,7 @@ The easiest way to to clone the project and run as a Rust binary project like th
 
 If all went well, you'll see something like this:
 
-   ________
+              ________
               ___  __/_____ ______________________ _
               __  /   _  _ \__  ___/__  ___/_  __ `/       Terra is a Tile38 based Geofence server.
               _  /    /  __/_  /    _  /    / /_/ /        v0.0.1
