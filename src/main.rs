@@ -1,5 +1,7 @@
 extern crate clap;
+extern crate terra;
 
+use terra::geofence::Server;
 use clap::{App, Arg};
 
 fn main() {
@@ -30,8 +32,7 @@ fn init() {
         .get_matches();
 
     println!("{}", banner);
-    let server_addr = format!("{}:{}", app.value_of("host").unwrap_or("localhost"), app.value_of("port").unwrap_or("9761"));
+    let server_addr = format!("{}:{}", app.value_of("host").unwrap_or("127.0.0.1"), app.value_of("port").unwrap_or("9761"));
     println!("\nTerra started! Listening for incoming connections on `{}`.", server_addr);
+    Server::start(server_addr)
 }
-
-
