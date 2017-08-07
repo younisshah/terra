@@ -6,7 +6,7 @@ authors = ["Younis Shah <younisashah@gmail.com>"]
 [dependencies]
 ws = "0.7.3"
 clap = "2.26.0"
-nazar = "1.0.5"
+nazar = "1.0.6"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"

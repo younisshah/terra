@@ -3,10 +3,9 @@ extern crate nazar;
 extern crate serde_json;
 
 use self::ws::{listen, CloseCode, Sender, Handler, Handshake, Message, Result};
-use self::nazar::t38::*;
+use self::nazar::t38::{NazarSender};
+use std::cmp::Ordering;
 use std::borrow::Cow;
-use std::net::SocketAddr;
-use serde_json::Value;
 
 enum FenceType {
     Circle,
@@ -16,7 +15,7 @@ enum FenceType {
 
 /// Terra's Server type
 pub struct Server {
-    url: SocketAddr,
+    t38_url: String,
     out: Sender,
 }
 
@@ -33,6 +32,7 @@ pub struct TerraCircle<'t> {
 #[derive(Debug, Deserialize)]
 pub struct TerraPolygon<'t> {
     fleet_name: &'t str,
+    id: &'t str,
     coordinates: Vec<Vec<f64>>,
 }
 
@@ -49,17 +49,18 @@ impl Server {
     ///
     /// # Panics
     ///
-    /// The `start` function panics if url is an empty string literal!
-    pub fn start<'t, U>(url: U)
+    /// The `start` function panics if either of `url` or `t38_url` is an empty Cow string!
+    pub fn start<'t, U>(url: U, t38_url: U)
         where U: Into<Cow<'t, str>>
     {
-        let cow_url = url.into();
-        assert!(cow_url != "");
-        let url: SocketAddr = cow_url.parse().unwrap();
-        listen(url, |out: Sender| Server { url, out }).unwrap()
+        let url = url.into().to_string();
+        let t38_url = t38_url.into().to_string();
+
+        assert_ne!(url.cmp(&"".to_string()), Ordering::Equal);
+        assert_ne!(t38_url.cmp(&"".to_string()), Ordering::Equal);
+
+        listen(url, |out: Sender| Server { t38_url: t38_url.clone(), out }).unwrap()
     }
-    /// circular fence
-    fn circular_fence(fence: TerraCircle) {}
 }
 
 /// `Handler` trait implementation for Terra server!
@@ -68,15 +69,15 @@ impl Handler for Server {
     /// been established
     fn on_open(&mut self, handshake: Handshake) -> Result<()> {
         if let Some(addr) = handshake.remote_addr()? {
-            println!("Connection open with {}", addr);
+            println!("[+] Connected with {}", addr);
         }
         Ok(())
     }
 
     /// Called when a close frame from client is received!
     fn on_close(&mut self, code: CloseCode, reason: &str) {
-        println!("Connection closing due to ({:?}) {}", code, reason);
-        self.out.close(code).unwrap();
+        println!("[*] Closing connection due to ({:?}) {}", code, reason);
+        //self.out.close(code).unwrap();
     }
 
     /// Handle inbound messages here!
@@ -89,14 +90,19 @@ impl Handler for Server {
                 match fence_type {
                     Circle => {
                         let c: TerraCircle = serde_json::from_str(json).unwrap_or(get_empty_circular_fence());
-                        println!("c= {:?}", c);
-                    },
+                        println!("[+] Opening a circular geofence = {:?}", c);
+                        let n = nazar::t38::Client::new();
+                        n.open_fence2(&format!("ws://{}", self.t38_url)[..], c.fleet_name, c.lat, c.lng, c.radius, action);
+                    }
                     Polygon => {
                         let p: TerraPolygon = serde_json::from_str(json).unwrap_or(get_empty_poly_fence());
-                        println!("p = {:?}", p);
-                    },
+                        println!("[+] Opening a polygonal geofence = {:?}", p);
+                        let n = nazar::t38::Client::new();
+                        n.open_fence_within2(&format!("ws://{}", self.t38_url)[..], p.fleet_name, p.id, p.coordinates, action);
+                    }
                     Unknown => {
-                        println!("UNKNOWN");
+                        println!("[*] Unknown geofence type. Valid types are 'circle' and 'polygon'.\n\
+                        Please check the 'fence_type'.");
                     }
                 }
                 Ok(())
@@ -119,10 +125,16 @@ fn get_type<'a>(json: &'a str) -> FenceType {
     }
 }
 
+/// Send the fence updates on the connected WebSocket!
+fn action(out: &NazarSender, msg: String) {
+    println!("[+] Fence update: {}", msg);
+    out.send(msg).unwrap_or_default();
+}
+
 fn get_empty_circular_fence<'a>() -> TerraCircle<'a> {
     TerraCircle { fleet_name: "", lat: "", lng: "", radius: "" }
 }
 
 fn get_empty_poly_fence<'a>() -> TerraPolygon<'a> {
-    TerraPolygon { fleet_name: "", coordinates: vec![vec![]]}
+    TerraPolygon { fleet_name: "", id: "", coordinates: vec![vec![]] }
 }
