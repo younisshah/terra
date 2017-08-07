@@ -5,9 +5,7 @@ and realtime geofence. It supports a variety of object types including lat/lon p
 Geohashes, and GeoJSON.
 
 Terra is a Tile38 based Geofence server in Rust. Terra is meant to be a memory-safe
-and highly concurrent geofence server.
-
-Terra is meant to be used for my personal location-based projects. It in no way
+and highly concurrent geofence server. Terra is meant to be used for my personal location-based projects. It in no way
 is a replacement for the amazing Tile38 server, but is actually an augmentation to it.
 
 Terra is **NOT** available as a __crate__ on [crates.io](http://crates.io) yet, although I plan to.
